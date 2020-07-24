@@ -9,9 +9,6 @@ class Rectangle {
 		this.filled = filled;
 	}
 	get_area() {
-		if (!this.filled) {
-			return - this.width * this.height;
-		}
 		return this.width * this.height;
 	}
 	get_xbar() {
@@ -21,11 +18,11 @@ class Rectangle {
 		return this.y + this.height / 2;
 	}
 	get_moi() {
-		return 1/12 * this.width * Math.pow(this.height,3); 
+		return 1/12 * this.width * Math.pow(this.height,3);
 	}
 }
 
-class EquilateralTriangle {
+class IsocelesTriangle {
 	constructor(x, y, base, height, filled=true) {
 		this.x = x;
 		this.y = y;
@@ -34,9 +31,6 @@ class EquilateralTriangle {
 		this.filled = filled;
 	}
 	get_area() {
-		if (!this.filled) {
-			return - 1/2 * this.base * this.height;
-		}
 		return 1/2 * this.base * this.height;
 	}
 	get_xbar() {
@@ -58,9 +52,6 @@ class Circle {
 		this.filled = filled;
 	}
 	get_area() {
-		if (!this.filled) {
-			return - Math.PI * Math.pow(this.radius,2);
-		}
 		return Math.PI * Math.pow(this.radius,2);
 	}
 	get_xbar() {
@@ -82,7 +73,11 @@ class Beam {
 	get_area() {
 		let area = 0;
 		for (let shape of this.shapes) {
-			area += shape.get_area();
+			if (shape.filled) {
+				area += shape.get_area();
+			} else {
+				area -= shape.get_area();
+			}
 		}
 		return area;
 	}
@@ -90,8 +85,13 @@ class Beam {
 		let area = 0;
 		let sum = 0;
 		for (let shape of this.shapes) {
-			sum += shape.get_ybar() * shape.get_area();
-			area += shape.get_area();
+			if (shape.filled) {
+				sum += shape.get_ybar() * shape.get_area();
+				area += shape.get_area();
+			} else {
+				sum -= shape.get_ybar() * shape.get_area();
+				area -= shape.get_area();
+			}
 		}
 		return sum / area;
 	}
@@ -99,8 +99,13 @@ class Beam {
 		let area = 0;
 		let sum = 0;
 		for (let shape of this.shapes) {
-			sum += shape.get_xbar() * shape.get_area();
-			area += shape.get_area();
+			if (shape.filled) {
+				sum += shape.get_xbar() * shape.get_area();
+				area += shape.get_area();
+			} else {
+				sum -= shape.get_xbar() * shape.get_area();
+				area -= shape.get_area();
+			}
 		}
 		return sum / area;
 	}
@@ -109,7 +114,11 @@ class Beam {
 		let sum = 0;
 		for (let shape of this.shapes) {
 			let dy = shape.get_ybar() - ybar;
-			sum += shape.get_moi() + shape.get_area() * Math.pow(dy,2);
+			if (shape.filled) {
+				sum += shape.get_moi() + shape.get_area() * Math.pow(dy,2);
+			} else {
+				sum -= shape.get_moi() + shape.get_area() * Math.pow(dy,2);
+			}
 		}
 		return sum;
 	}
@@ -149,15 +158,15 @@ class IBeam extends Beam {
 		let diff_x = max_x - min_x;
 		var upper_x, lower_x;
 		if (upper_base > lower_base) {
-			upper_x = diff_x / 2;
-			lower_x = 0;
-		} else {
 			upper_x = 0;
 			lower_x = diff_x / 2;
+		} else {
+			upper_x = diff_x / 2;
+			lower_x = 0;
 		}
 		this.shapes.push(new Rectangle(lower_x, 0, lower_base, lower_height));
 		this.shapes.push(new Rectangle((max_x - middle_base) / 2, lower_height, middle_base, middle_height));
-		this.shapes.push(new Rectangle(upper_x, lower_height + middle_height, upper_height, upper_height));
+		this.shapes.push(new Rectangle(upper_x, lower_height + middle_height, upper_base, upper_height));
 	}
 }
 
@@ -244,6 +253,12 @@ $(function() {
 			return;
 		}
 
+		// Reset outputs
+		$("#area").val(0);
+		$("#xbar").val(0);
+		$("#ybar").val(0);
+		$("#moi").val(0);
+
 		current_beam_type = dropdown_labels[$(this).text()];
 		show_image();
 		add_fields();
@@ -303,6 +318,7 @@ function calculate() {
 		return;
 	}
 
+	// Create beam objects
 	switch(current_beam_type) {
 		case "RectangleBeam":
 			current_beam = new RectangleBeam(...res);
