@@ -1,0 +1,61 @@
+<head>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+	<script src="index.js"></script>
+	<link rel="stylesheet" type="text/css" href="styles.css">
+	<title>Moment of Inertia Calculator</title>
+</head>
+
+<body>
+	<div class="card">
+		<h5 class="card-header">Beam Selection</h5>
+		<div class="card-body">
+			<p class="card-text">First, select a beam type:</p>
+			<div class="dropdown">
+				<button class="btn btn-primary dropdown-toggle" type="button" id="beam-selector-button" data-toggle="dropdown">Select a beam type</button>
+				<div class="dropdown-menu">
+					<a class="dropdown-item">Rectangular Beam</a>
+					<a class="dropdown-item">Hollow Rectangular Beam</a>
+					<a class="dropdown-item">T Beam</a>
+					<a class="dropdown-item">I Beam</a>
+					<a class="dropdown-item">H Beam</a>
+					<a class="dropdown-item">Circular Beam</a>
+					<a class="dropdown-item">Hollow Circular Beam</a>
+					<!-- <a class="dropdown-item">Double T Beam</a> -->
+				</div>
+			</div>
+		</div>
+	</div>
+	<br>
+	<div class="card">
+		<h5 class="card-header">Beam Information</h5>
+		<div id="calculator-card-body" class="card-body row collapse">
+			<div class="col-md-6 vline">
+				<img></img>
+			</div>
+			<form class="form col-md-6">
+				<div id=input-container></div>
+				<button id="submit-button" type="button" class="btn btn-primary">Calculate</button>
+				<hr/>
+				<div class="form-group row">
+					<label class="col-form-label col-sm-4" for="area">Total Area</label>
+					<input class="col-sm-7 form-control" id="area" placeholder="0" disabled>
+				</div>
+				<div class="form-group row">
+					<label class="col-form-label col-sm-4" for="xbar">X-Axis Centroid</label>
+					<input class="col-sm-7 form-control" id="xbar" placeholder="0" disabled>
+				</div>
+				<div class="form-group row">
+					<label class="col-form-label col-sm-4" for="ybar">Y-Axis Centroid</label>
+					<input class="col-sm-7 form-control" id="ybar" placeholder="0" disabled>
+				</div>
+				<div class="form-group row">
+					<label class="col-form-label col-sm-4" for="moi">Moment of Inertia</label>
+					<input class="col-sm-7 form-control" id="moi" placeholder="0" disabled>
+				</div>
+			</form>
+		</div>
+	</div>
+</body>

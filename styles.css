@@ -1,0 +1,13 @@
+body {
+	margin: 2%;
+}
+
+img {
+	flex-shrink: 1;
+	min-width: 0;
+	min-height: 0;
+}
+
+.vline {
+	border-right: 1px solid rgba(0,0,0,.1);
+}
