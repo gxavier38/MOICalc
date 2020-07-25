@@ -9,16 +9,16 @@ class Rectangle {
 		this.filled = filled;
 	}
 	get_area() {
-		return this.width * this.height;
+		return this.width.clone().times(this.height);
 	}
 	get_xbar() {
-		return this.x + this.width / 2;
+		return this.width.clone().div(2).plus(this.x);
 	}
 	get_ybar() {
-		return this.y + this.height / 2;
+		return this.height.clone().div(2).plus(this.y);
 	}
 	get_moi() {
-		return 1/12 * this.width * Math.pow(this.height,3);
+		return this.height.clone().pow(3).times(this.width).div(12);
 	}
 }
 
@@ -31,19 +31,24 @@ class IsocelesTriangle {
 		this.filled = filled;
 	}
 	get_area() {
-		return 1/2 * this.base * this.height;
+		return this.base.clone().times(this.height).div(2);
 	}
 	get_xbar() {
-		return this.x + 1/2 * this.width;
+		return this.width.clone().div(2).plus(this.x);
 	}
 	get_ybar() {
-		return this.y + 1/3 * this.height;
+		return this.height.clone().div(3).plus(this.y);
 	}
 	get_moi() {
-		return 1/36 * this.base * Math.pow(this.height,3);
+		return this.height.clone().pow(3).times(this.base).div(36);
 	}
 }
 
+/*
+ * The fraction library does not support pi, so the results of get_area() and get_moi()
+ * need to be multiplied by pi at the end. Currently, this is handled during printing to
+ * the UI.
+ */
 class Circle {
 	constructor(x, y, radius, filled=true) {
 		this.x = x;
@@ -52,16 +57,16 @@ class Circle {
 		this.filled = filled;
 	}
 	get_area() {
-		return Math.PI * Math.pow(this.radius,2);
+		return this.radius.clone().pow(2);
 	}
 	get_xbar() {
-		return this.x + this.radius;
+		return this.x.clone().plus(this.radius);
 	}
 	get_ybar() {
-		return this.y + this.radius;
+		return this.y.clone().plus(this.radius);
 	}
 	get_moi() {
-		return Math.PI / 4 * Math.pow(this.radius, 4);
+		return this.radius.clone().pow(4).div(4);
 	}
 }
 
@@ -71,53 +76,53 @@ class Beam {
 		this.shapes = [];
 	}
 	get_area() {
-		let area = 0;
+		let area = fc(0);
 		for (let shape of this.shapes) {
 			if (shape.filled) {
-				area += shape.get_area();
+				area.plus(shape.get_area());
 			} else {
-				area -= shape.get_area();
+				area.minus(shape.get_area());
 			}
 		}
 		return area;
 	}
 	get_ybar() {
-		let area = 0;
-		let sum = 0;
+		let area = fc(0);
+		let sum = fc(0);
 		for (let shape of this.shapes) {
 			if (shape.filled) {
-				sum += shape.get_ybar() * shape.get_area();
-				area += shape.get_area();
+				sum.plus(shape.get_ybar().times(shape.get_area()));
+				area.plus(shape.get_area());
 			} else {
-				sum -= shape.get_ybar() * shape.get_area();
-				area -= shape.get_area();
+				sum.minus(shape.get_ybar().times(shape.get_area()));
+				area.minus(shape.get_area());
 			}
 		}
-		return sum / area;
+		return sum.div(area);
 	}
 	get_xbar() {
-		let area = 0;
-		let sum = 0;
+		let area = fc(0);
+		let sum = fc(0);
 		for (let shape of this.shapes) {
 			if (shape.filled) {
-				sum += shape.get_xbar() * shape.get_area();
-				area += shape.get_area();
+				sum.plus(shape.get_xbar().times(shape.get_area()));
+				area.plus(shape.get_area());
 			} else {
-				sum -= shape.get_xbar() * shape.get_area();
-				area -= shape.get_area();
+				sum.minus(shape.get_xbar().times(shape.get_area()));
+				area.minus(shape.get_area());
 			}
 		}
-		return sum / area;
+		return sum.div(area);
 	}
 	get_moi() {
 		let ybar = this.get_ybar();
-		let sum = 0;
+		let sum = fc(0);
 		for (let shape of this.shapes) {
-			let dy = shape.get_ybar() - ybar;
+			let dy = shape.get_ybar().minus(ybar);
 			if (shape.filled) {
-				sum += shape.get_moi() + shape.get_area() * Math.pow(dy,2);
+				sum.plus(shape.get_area().times(dy.pow(2)).plus(shape.get_moi()));
 			} else {
-				sum -= shape.get_moi() + shape.get_area() * Math.pow(dy,2);
+				sum.minus(shape.get_area().times(dy.pow(2)).plus(shape.get_moi()));
 			}
 		}
 		return sum;
@@ -127,87 +132,99 @@ class Beam {
 class RectangleBeam extends Beam {
 	constructor(base, height) {
 		super();
-		this.shapes.push(new Rectangle(0, 0, base, height));
+		this.shapes.push(new Rectangle(fc(0), fc(0), base.clone(), height.clone()));
 	}
 }
 
 class HollowRectangleBeam extends Beam {
 	constructor(base, height, inner_base, inner_height) {
 		super();
-		let dx = (base - inner_base) / 2;
-		let dy = (height - inner_height) / 2;
-		this.shapes.push(new Rectangle(0, 0, base, height));
-		this.shapes.push(new Rectangle(dx, dy, inner_base, inner_height, false));
+		if (inner_base.greaterThan(base) || inner_height.greaterThan(height)) {
+			alert("Error: Inner sizes cannot be larger than outer sizes");
+			return;
+		}
+		let dx = base.clone().minus(inner_base).div(2);
+		let dy = height.clone().minus(inner_height).div(2);
+		this.shapes.push(new Rectangle(fc(0), fc(0), base.clone(), height.clone()));
+		this.shapes.push(new Rectangle(dx, dy, inner_base.clone(), inner_height.clone(), false));
 	}
 }
 
 class TBeam extends Beam {
 	constructor(upper_base, upper_height, lower_base, lower_height) {
 		super();
-		let dx = (upper_base - lower_base) / 2;
-		this.shapes.push(new Rectangle(dx, 0, lower_base, lower_height));
-		this.shapes.push(new Rectangle(0, lower_height, upper_base, upper_height));
+		if (lower_base.greaterThan(upper_base)) {
+			alert("Error: Lower base cannot be larger than upper base");
+			return;
+		}
+		let dx = upper_base.clone().minus(lower_base).div(2);
+		this.shapes.push(new Rectangle(dx, fc(0), lower_base.clone(), lower_height.clone()));
+		this.shapes.push(new Rectangle(fc(0), lower_height.clone(), upper_base.clone(), upper_height.clone()));
 	}
 }
 
 class IBeam extends Beam {
 	constructor(upper_base, upper_height, middle_base, middle_height, lower_base, lower_height) {
 		super();
-		let max_x = Math.max(upper_base, lower_base);
-		let min_x = Math.min(upper_base, lower_base);
-		let diff_x = max_x - min_x;
+		let max_x = max(upper_base, lower_base);
+		let min_x = min(upper_base, lower_base);
+		let diff_x = max_x.clone().minus(min_x);
 		var upper_x, lower_x;
-		if (upper_base > lower_base) {
-			upper_x = 0;
-			lower_x = diff_x / 2;
+		if (upper_base.greaterThan(lower_base)) {
+			upper_x = fc(0);
+			lower_x = diff_x.clone().div(2);
 		} else {
-			upper_x = diff_x / 2;
-			lower_x = 0;
+			upper_x = diff_x.clone().div(2);
+			lower_x = fc(0);
 		}
-		this.shapes.push(new Rectangle(lower_x, 0, lower_base, lower_height));
-		this.shapes.push(new Rectangle((max_x - middle_base) / 2, lower_height, middle_base, middle_height));
-		this.shapes.push(new Rectangle(upper_x, lower_height + middle_height, upper_base, upper_height));
+		this.shapes.push(new Rectangle(lower_x.clone(), fc(0), lower_base.clone(), lower_height.clone()));
+		this.shapes.push(new Rectangle(max(max_x.clone().minus(middle_base).div(2), fc(0)), lower_height.clone(), middle_base.clone(), middle_height.clone()));
+		this.shapes.push(new Rectangle(upper_x.clone(), lower_height.clone().plus(middle_height), upper_base.clone(), upper_height.clone()));
 	}
 }
 
 class HBeam extends Beam {
 	constructor(left_base, left_height, middle_base, middle_height, right_base, right_height) {
 		super();
-		let max_y = Math.max(left_height, right_height);
-		let min_y = Math.min(left_height, right_height);
-		let diff_y = max_y - min_y;
+		let max_y = max(left_height, right_height);
+		let min_y = min(left_height, right_height);
+		let diff_y = max_y.clone().minus(min_y);
 		var left_y, right_y;
-		if (left_height > right_height) {
-			left_y = 0;
-			right_y = diff_y / 2;
+		if (left_height.greaterThan(right_height)) {
+			left_y = fc(0);
+			right_y = diff_y.clone().div(2);
 		} else {
-			left_y = diff_y / 2;
-			right_y = 0;
+			left_y = diff_y.clone().div(2);
+			right_y = fc(0);
 		}
-		this.shapes.push(new Rectangle(0, left_y, left_base, left_height));
-		this.shapes.push(new Rectangle(left_base, (max_y - middle_height) / 2, middle_base, middle_height));
-		this.shapes.push(new Rectangle(left_base + middle_base, right_y, right_base, right_height));
+		this.shapes.push(new Rectangle(fc(0), left_y.clone(), left_base.clone(), left_height.clone()));
+		this.shapes.push(new Rectangle(left_base.clone(), max(max_y.clone().minus(middle_height).div(2), fc(0)), middle_base.clone(), middle_height.clone()));
+		this.shapes.push(new Rectangle(left_base.clone().plus(middle_base), right_y.clone(), right_base.clone(), right_height.clone()));
 	}
 }
 
 class CircleBeam extends Beam {
 	constructor(radius) {
 		super();
-		this.shapes.push(new Circle(0, 0, radius));
+		this.shapes.push(new Circle(fc(0), fc(0), radius.clone()));
 	}
 }
 
 class HollowCircleBeam extends Beam {
 	constructor(outer_radius, inner_radius) {
 		super();
-		let thickness = outer_radius - inner_radius;
-		this.shapes.push(new Circle(0, 0, outer_radius));
-		this.shapes.push(new Circle(thickness, thickness, inner_radius, false));
+		if (inner_radius.greaterThan(outer_radius)) {
+			alert("Error: Inner sizes cannot be larger than outer sizes");
+			return;
+		}
+		let thickness = outer_radius.clone().minus(inner_radius);
+		this.shapes.push(new Circle(fc(0), fc(0), outer_radius.clone()));
+		this.shapes.push(new Circle(thickness.clone(), thickness.clone(), inner_radius.clone(), false));
 	}
 }
 
 class DoubleTBeam extends Beam {
-	constructor(x1, y1, base1, height1, x2, y2, base2, height2, x3, y3, base3, height3) {
+	constructor(base1, height1, base2, height2, base3, height3) {
 		alert("Error: Unsupported beam");
 		return;
 		super();
@@ -231,7 +248,7 @@ let dropdown_labels = {
 	"Circular Beam": "CircleBeam",
 	"Hollow Circular Beam": "HollowCircleBeam",
 	"Double T Beam": "DoubleTBeam"
-}
+};
 
 let labels = {
 	"RectangleBeam" :{"base": "Base", "height": "Height"},
@@ -290,10 +307,6 @@ function add_fields() {
 	}
 }
 
-function isNumeric(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
-}
-
 function get_variables() {
 	if (labels[current_beam_type] === undefined) {
 		return null;
@@ -301,9 +314,9 @@ function get_variables() {
 	let res = [];
 	for (let variable in labels[current_beam_type]) {
 		let text = $("#" + variable).val();
-		if (isNumeric(text) && parseFloat(text) >= 0) {
-			res.push(parseFloat(text));
-		} else {
+		try {
+			res.push(fc(text));
+		} catch(e) {
 			alert("Error: Invalid " + labels[current_beam_type][variable]);
 			return null;
 		}
@@ -349,8 +362,182 @@ function calculate() {
 	}
 
 	// Calculate values
-	$("#area").val(current_beam.get_area());
-	$("#xbar").val(current_beam.get_xbar());
-	$("#ybar").val(current_beam.get_ybar());
-	$("#moi").val(current_beam.get_moi());
+	if ($("#toggle").prop("checked")) {
+		print_decimal();
+	} else {
+		print_fraction();
+	}
+}
+
+function print_decimal() {
+	if (current_beam_type === "CircleBeam" || current_beam_type === "HollowCircleBeam") {
+		$("#area").val(current_beam.get_area().toNumber() + "\u03C0");
+		$("#moi").val(current_beam.get_moi().toNumber() + "\u03C0");
+	} else {
+		$("#area").val(current_beam.get_area().toNumber());
+		$("#moi").val(current_beam.get_moi().toNumber());
+	}
+	$("#xbar").val(current_beam.get_xbar().toNumber());
+	$("#ybar").val(current_beam.get_ybar().toNumber());
+}
+
+function print_fraction() {
+	if (current_beam_type === "CircleBeam" || current_beam_type === "HollowCircleBeam") {
+		$("#area").val(current_beam.get_area().toFraction() + "\u03C0");
+		$("#moi").val(current_beam.get_moi().toFraction() + "\u03C0");
+	} else {
+		$("#area").val(current_beam.get_area().toFraction());
+		$("#moi").val(current_beam.get_moi().toFraction());
+	}
+	$("#xbar").val(current_beam.get_xbar().toFraction());
+	$("#ybar").val(current_beam.get_ybar().toFraction());
+}
+
+/* UTIL */
+function max(a,b) {
+	if (a.greaterThan(b)) {
+		return a;
+	}
+	return b;
+}
+
+function min(a,b) {
+	if (a.greaterThan(b)) {
+		return b;
+	}
+	return a;
+}
+
+function fc_array_equal(a,b) {
+	if (a === b)  {
+		return true;
+	}
+	if (a == null || b == null) {
+		return false;
+	}
+	if (a.length !== b.length) {
+		return false;
+	}
+
+	for (let i = 0; i < a.length; i++) {
+		if (!a[i].equals(b[i])) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/* TESTS */
+let tests = {
+	"RectangleBeam": [
+		{"args": [10,12], "results": [120,5,6,1440]},
+		{"args": [3,10], "results": [30,1.5,5,250]},
+		{"args": [12,1], "results": [12,6,0.5,1]},
+	],
+	"HollowRectangleBeam": [
+		{"args": [12,12,6,6], "results": [108,6,6,1620]},
+		{"args": [12,12,6,0], "results": [144,6,6,1728]},
+		{"args": [12,12,0,0], "results": [144,6,6,1728]},
+		{"args": [18,18,12,12], "results": [180,9,9,7020]},
+		{"args": [18,12,12,6], "results": [144,9,6,2376]},
+	],
+	"TBeam": [
+		{"args": [12,6,3,12], "results": [108,6,12,2592]},
+		{"args": [12,1,0,0], "results": [12,6,0.5,1]},
+	],
+	"IBeam": [
+		{"args": [20,5,5,20,20,5], "results": [300,10,15,35000]},
+		{"args": [12,6,0,0,12,6], "results": [144,6,6,1728]},
+		{"args": [12,6,3,12,0,0], "results": [108,6,12,2592]},
+		{"args": [0,0,3,12,12,6], "results": [108,6,6,2592]},
+		{"args": [10,4,4,10,10,4], "results": [120,5,9,4360]},
+	],
+	"HBeam": [
+		{"args": [5,20,20,5,5,20], "results": [300,15,10,6875]},
+		{"args": [0,0,12,1,0,0], "results": [12,6,0.5,1]},
+		{"args": [12,1,0,0,0,0], "results": [12,6,0.5,1]},
+		{"args": [0,0,0,0,12,1], "results": [12,6,0.5,1]},
+		{"args": [4,10,10,4,4,10], "results": [120,9,5,720]},
+	],
+	"CircleBeam": [
+		{"args": [2], "results": [4,2,2,4]},
+		{"args": [4], "results": [16,4,4,64]},
+	],
+	"HollowCircleBeam": [
+		{"args": [2,0], "results": [4,2,2,4]},
+		{"args": [4,2], "results": [12,4,4,60]},
+	],
+}
+
+function test() {
+	for (let beam in labels) {
+		test_beam(beam);
+	}
+	console.log("All cases passed!");
+}
+
+function test_beam(beam_type) {
+	if (tests[beam_type] === undefined) {
+		return;
+	}
+	for (let testcase of tests[beam_type]) {
+		let args = fc_array(testcase["args"]);
+		let correct = fc_array(testcase["results"]);
+		var beam;
+		switch(beam_type) {
+			case "RectangleBeam":
+				beam = new RectangleBeam(...args);
+				break;
+			case "HollowRectangleBeam":
+				beam = new HollowRectangleBeam(...args);
+				break;
+			case "TBeam":
+				beam = new TBeam(...args);
+				break;
+			case "IBeam":
+				beam = new IBeam(...args);
+				break;
+			case "HBeam":
+				beam = new HBeam(...args);
+				break;
+			case "CircleBeam":
+				beam = new CircleBeam(...args);
+				break;
+			case "HollowCircleBeam":
+				beam = new HollowCircleBeam(...args);
+				break;
+			case "DoubleTBeam":
+				beam = new DoubleTBeam(...args);
+				break;
+			default:
+				return;
+		}
+		let results = [beam.get_area(), beam.get_xbar(), beam.get_ybar(), beam.get_moi()]; 
+		if (!fc_array_equal(results, correct)) {
+			throw new Error("Test for " + beam_type + " failed with inputs " +
+				fc_array_tostring(args) + ". Got " + fc_array_tostring(results) + 
+				" but wanted " + fc_array_tostring(correct) + ".");
+		}
+	}	
+}
+
+/* TEST UTILS */
+function fc_array(a) {
+	let res = [];
+	for (let i = 0; i < a.length; i++) {
+		res.push(fc(a[i]));
+	}
+	return res;
+}
+
+function fc_array_tostring(a) {
+	let res = "[";
+	for (let i = 0; i < a.length; i++) {
+		res += a[i].toFraction();
+		if (i !== a.length - 1) {
+			res += ",";
+		}
+	}
+	res += "]"
+	return res;
 }
