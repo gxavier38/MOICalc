@@ -24,9 +24,10 @@
 					<a class="dropdown-item">H Beam</a>
 					<a class="dropdown-item">N Beam</a>
 					<a class="dropdown-item">U Beam</a>
+					<a class="dropdown-item">L Beam</a>
 					<a class="dropdown-item">Circular Beam</a>
 					<a class="dropdown-item">Hollow Circular Beam</a>
-					<!-- <a class="dropdown-item">Double T Beam</a> -->
+					<a class="dropdown-item">Isoceles Triangle Beam</a>
 				</div>
 			</div>
 		</div>
@@ -46,21 +47,24 @@
 					<label class="col-form-label" for="toggle">Print as decimal</label>
 				</div>
 				<hr/>
-				<div class="form-group row">
+				<div class="form-group row" data-toggle="tooltip" title="Total cross-sectional area">
 					<label class="col-form-label col-sm-5" for="area">Total Area</label>
 					<input class="col-sm-6 form-control" id="area" placeholder="0" disabled>
 				</div>
-				<div class="form-group row">
+				<div class="form-group row" data-toggle="tooltip" title="X-axis centroid measured from the leftmost point of the cross section">
 					<label class="col-form-label col-sm-5" for="xbar">X-Axis Centroid</label>
 					<input class="col-sm-6 form-control" id="xbar" placeholder="0" disabled>
 				</div>
-				<div class="form-group row">
+				<div class="form-group row" data-toggle="tooltip" title="Y-axis centroid measured from the lowest point of the cross section">
 					<label class="col-form-label col-sm-5" for="ybar">Y-Axis Centroid</label>
 					<input class="col-sm-6 form-control" id="ybar" placeholder="0" disabled>
 				</div>
-				<div class="form-group row">
+				<div class="form-group row" data-toggle="tooltip" title="Moment of inertia measured from the horizontal axis at the centroid">
 					<label class="col-form-label col-sm-5" for="moi">Moment of Inertia</label>
 					<input class="col-sm-6 form-control" id="moi" placeholder="0" disabled>
+				</div>
+				<div class="form-group">
+					Hover over a field to see more information
 				</div>
 			</form>
 		</div>

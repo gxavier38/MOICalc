@@ -34,7 +34,7 @@ class IsocelesTriangle {
 		return this.base.clone().times(this.height).div(2);
 	}
 	get_xbar() {
-		return this.width.clone().div(2).plus(this.x);
+		return this.base.clone().div(2).plus(this.x);
 	}
 	get_ybar() {
 		return this.height.clone().div(3).plus(this.y);
@@ -230,6 +230,14 @@ class UBeam extends Beam {
 	}
 }
 
+class LBeam extends Beam {
+	constructor(left_base, left_height, bottom_base, bottom_height) {
+		super();
+		this.shapes.push(new Rectangle(fc(0), fc(0), left_base.clone(), left_height.clone()));
+		this.shapes.push(new Rectangle(left_base.clone(), fc(0), bottom_base.clone(), bottom_height.clone()));
+	}
+}
+
 class CircleBeam extends Beam {
 	constructor(radius) {
 		super();
@@ -249,13 +257,10 @@ class HollowCircleBeam extends Beam {
 	}
 }
 
-class DoubleTBeam extends Beam {
-	constructor(base1, height1, base2, height2, base3, height3) {
-		throw new Error("Unsupported beam");
+class IsocelesTriangleBeam extends Beam {
+	constructor(base, height) {
 		super();
-		this.shapes.push(new Rectangle(x1, y1, base1, height1));
-		this.shapes.push(new Rectangle(x2, y2, base2, height2));
-		this.shapes.push(new Rectangle(x3, y3, base3, height3));
+		this.shapes.push(new IsocelesTriangle(fc(0), fc(0), base.clone(), height.clone()));
 	}
 }
 
@@ -271,9 +276,10 @@ let dropdown_labels = {
 	"H Beam": "HBeam",
 	"N Beam": "NBeam",
 	"U Beam": "UBeam",
+	"L Beam": "LBeam",
 	"Circular Beam": "CircleBeam",
 	"Hollow Circular Beam": "HollowCircleBeam",
-	"Double T Beam": "DoubleTBeam"
+	"Isoceles Triangle Beam": "IsocelesTriangleBeam"
 };
 
 let labels = {
@@ -284,9 +290,10 @@ let labels = {
 	"HBeam": {"left-base": "Left Base", "left-height": "Left Height", "middle-base": "Middle Base", "middle-height": "Middle Height", "right-base": "Right Base", "right-height": "Right Height"},
 	"NBeam": {"left-base": "Left Base", "left-height": "Left Height", "middle-base": "Middle Base", "middle-height": "Middle Height", "right-base": "Right Base", "right-height": "Right Height"},
 	"UBeam": {"left-base": "Left Base", "left-height": "Left Height", "middle-base": "Middle Base", "middle-height": "Middle Height", "right-base": "Right Base", "right-height": "Right Height"},
+	"LBeam": {"left-base": "Left Base", "left-height": "Left Height", "bottom-base": "Bottom Base", "bottom-height": "Bottom Height"},
 	"CircleBeam": {"radius": "Radius"},
 	"HollowCircleBeam": {"outer-radius": "Outer Radius", "inner-radius": "Inner Radius"},
-	"DoubleTBeam": {},
+	"IsocelesTriangleBeam": {"base": "Base", "height": "Height"},
 };
 
 $(function() {
@@ -387,14 +394,17 @@ function calculate() {
 		case "UBeam":
 			current_beam = new UBeam(...res);
 			break;
+		case "LBeam":
+			current_beam = new LBeam(...res);;
+			break;
 		case "CircleBeam":
 			current_beam = new CircleBeam(...res);
 			break;
 		case "HollowCircleBeam":
 			current_beam = new HollowCircleBeam(...res);
 			break;
-		case "DoubleTBeam":
-			current_beam = new DoubleTBeam(...res);
+		case "IsocelesTriangleBeam":
+			current_beam = new IsocelesTriangleBeam(...res);
 			break;
 		default:
 			return;
@@ -509,6 +519,12 @@ let tests = {
 	"UBeam": [
 		{"args": [2,20,20,2,2,20], "results": [120,12,7,4840]},
 	],
+	"LBeam": [
+		{"args": [3,4,3,4], "results": [24,3,2,32]},
+		{"args": [2,6,0,0], "results": [12,1,3,36]},
+		{"args": [0,0,2,6], "results": [12,1,3,36]},
+		{"args": [2,6,6,2], "results": [24,3,2,64]},
+	],
 	"CircleBeam": [
 		{"args": [2], "results": [4,2,2,4]},
 		{"args": [4], "results": [16,4,4,64]},
@@ -517,6 +533,11 @@ let tests = {
 		{"args": [2,0], "results": [4,2,2,4]},
 		{"args": [4,2], "results": [12,4,4,60]},
 	],
+	"IsocelesTriangleBeam": [
+		{"args": [2,6], "results": [6,1,2,12]},
+		{"args": [4,6], "results": [12,2,2,24]},
+		{"args": [4,3], "results": [6,2,1,3]},
+	]
 }
 
 function test() {
@@ -550,14 +571,23 @@ function test_beam(beam_type) {
 			case "HBeam":
 				beam = new HBeam(...args);
 				break;
+			case "NBeam":
+				beam = new NBeam(...args);
+				break;
+			case "UBeam":
+				beam = new UBeam(...args);
+				break;
+			case "LBeam":
+				beam = new LBeam(...args);;
+				break;
 			case "CircleBeam":
 				beam = new CircleBeam(...args);
 				break;
 			case "HollowCircleBeam":
 				beam = new HollowCircleBeam(...args);
 				break;
-			case "DoubleTBeam":
-				beam = new DoubleTBeam(...args);
+			case "IsocelesTriangleBeam":
+				beam = new IsocelesTriangleBeam(...args);
 				break;
 			default:
 				return;
