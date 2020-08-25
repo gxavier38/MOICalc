@@ -139,9 +139,8 @@ class RectangleBeam extends Beam {
 class HollowRectangleBeam extends Beam {
 	constructor(base, height, inner_base, inner_height) {
 		super();
-		if (inner_base.greaterThan(base) || inner_height.greaterThan(height)) {
-			alert("Error: Inner sizes cannot be larger than outer sizes");
-			return;
+		if (!inner_base.lessThan(base) || !inner_height.lessThan(height)) {
+			throw new Error("Inner sizes cannot be larger than outer sizes");
 		}
 		let dx = base.clone().minus(inner_base).div(2);
 		let dy = height.clone().minus(inner_height).div(2);
@@ -153,9 +152,8 @@ class HollowRectangleBeam extends Beam {
 class TBeam extends Beam {
 	constructor(upper_base, upper_height, lower_base, lower_height) {
 		super();
-		if (lower_base.greaterThan(upper_base)) {
-			alert("Error: Lower base cannot be larger than upper base");
-			return;
+		if (!lower_base.lessThan(upper_base)) {
+			throw new Error("Lower base cannot be larger than upper base");
 		}
 		let dx = upper_base.clone().minus(lower_base).div(2);
 		this.shapes.push(new Rectangle(dx, fc(0), lower_base.clone(), lower_height.clone()));
@@ -203,6 +201,35 @@ class HBeam extends Beam {
 	}
 }
 
+class NBeam extends Beam {
+	constructor(left_base, left_height, middle_base, middle_height, right_base, right_height) {
+		super();
+		let max_y = max(left_height, right_height);
+		let min_y = min(left_height, right_height);
+		let diff_y = max_y.clone().minus(min_y);
+		var left_y, right_y;
+		if (left_height.greaterThan(right_height)) {
+			left_y = fc(0);
+			right_y = diff_y.clone();
+		} else {
+			left_y = diff_y.clone();
+			right_y = fc(0);
+		}
+		this.shapes.push(new Rectangle(fc(0), left_y.clone(), left_base.clone(), left_height.clone()));
+		this.shapes.push(new Rectangle(left_base.clone(), max(max_y.clone().minus(middle_height), fc(0)), middle_base.clone(), middle_height.clone()));
+		this.shapes.push(new Rectangle(left_base.clone().plus(middle_base), right_y.clone(), right_base.clone(), right_height.clone()));
+	}
+}
+
+class UBeam extends Beam {
+	constructor(left_base, left_height, middle_base, middle_height, right_base, right_height) {
+		super();
+		this.shapes.push(new Rectangle(fc(0), fc(0), left_base.clone(), left_height.clone()));
+		this.shapes.push(new Rectangle(left_base.clone(), fc(0), middle_base.clone(), middle_height.clone()));
+		this.shapes.push(new Rectangle(left_base.clone().plus(middle_base), fc(0), right_base.clone(), right_height.clone()));
+	}
+}
+
 class CircleBeam extends Beam {
 	constructor(radius) {
 		super();
@@ -213,9 +240,8 @@ class CircleBeam extends Beam {
 class HollowCircleBeam extends Beam {
 	constructor(outer_radius, inner_radius) {
 		super();
-		if (inner_radius.greaterThan(outer_radius)) {
-			alert("Error: Inner sizes cannot be larger than outer sizes");
-			return;
+		if (!inner_radius.lessThan(outer_radius)) {
+			throw new Error("Inner sizes cannot be larger than outer sizes");
 		}
 		let thickness = outer_radius.clone().minus(inner_radius);
 		this.shapes.push(new Circle(fc(0), fc(0), outer_radius.clone()));
@@ -225,8 +251,7 @@ class HollowCircleBeam extends Beam {
 
 class DoubleTBeam extends Beam {
 	constructor(base1, height1, base2, height2, base3, height3) {
-		alert("Error: Unsupported beam");
-		return;
+		throw new Error("Unsupported beam");
 		super();
 		this.shapes.push(new Rectangle(x1, y1, base1, height1));
 		this.shapes.push(new Rectangle(x2, y2, base2, height2));
@@ -237,7 +262,6 @@ class DoubleTBeam extends Beam {
 /* UI */
 var current_beam_type;
 var current_beam;
-var variables = {};
 
 let dropdown_labels = {
 	"Rectangular Beam": "RectangleBeam",
@@ -245,6 +269,8 @@ let dropdown_labels = {
 	"T Beam": "TBeam",
 	"I Beam": "IBeam",
 	"H Beam": "HBeam",
+	"N Beam": "NBeam",
+	"U Beam": "UBeam",
 	"Circular Beam": "CircleBeam",
 	"Hollow Circular Beam": "HollowCircleBeam",
 	"Double T Beam": "DoubleTBeam"
@@ -256,6 +282,8 @@ let labels = {
 	"TBeam": {"upper-base": "Upper Base", "upper-height": "Upper Height", "lower-base": "Lower Base", "lower-height": "Lower Height"},
 	"IBeam": {"upper-base": "Upper Base", "upper-height": "Upper Height", "middle-base": "Middle Base", "middle-height": "Middle Height", "lower-base": "Lower Base", "lower-height": "Lower Height"},
 	"HBeam": {"left-base": "Left Base", "left-height": "Left Height", "middle-base": "Middle Base", "middle-height": "Middle Height", "right-base": "Right Base", "right-height": "Right Height"},
+	"NBeam": {"left-base": "Left Base", "left-height": "Left Height", "middle-base": "Middle Base", "middle-height": "Middle Height", "right-base": "Right Base", "right-height": "Right Height"},
+	"UBeam": {"left-base": "Left Base", "left-height": "Left Height", "middle-base": "Middle Base", "middle-height": "Middle Height", "right-base": "Right Base", "right-height": "Right Height"},
 	"CircleBeam": {"radius": "Radius"},
 	"HollowCircleBeam": {"outer-radius": "Outer Radius", "inner-radius": "Inner Radius"},
 	"DoubleTBeam": {},
@@ -266,8 +294,7 @@ $(function() {
 		$("#beam-selector-button").text($(this).text());
 
 		if (dropdown_labels[$(this).text()] === undefined) {
-			alert("Error: Invalid beam type");
-			return;
+			throw new Error("Invalid beam type");
 		}
 
 		// Reset outputs
@@ -282,8 +309,12 @@ $(function() {
 
 		$("#calculator-card-body").removeClass("collapse");
 	});
-	$("#submit-button").click(function(){
-		calculate();
+	$("#submit-button").click(function() {
+		try {
+			calculate();
+		} catch (e) {
+			alert(e);
+		}
 	});
 });
 
@@ -301,8 +332,8 @@ function add_fields() {
 	let container = $("#input-container").empty();
 	for (let id in labels[current_beam_type]) {
 		label = labels[current_beam_type][id];
-		container.append("<div class=\"form-group row\"><label class=\"col-form-label col-sm-4\" for=\"" + 
-			id + "\">" + label + "</label>\n<input class=\"form-control col-sm-7\" id=\"" + 
+		container.append("<div class=\"form-group row\"><label class=\"col-form-label col-sm-5\" for=\"" + 
+			id + "\">" + label + "</label>\n<input class=\"form-control col-sm-6\" id=\"" + 
 			id + "\"></input></div>");
 	}
 }
@@ -314,11 +345,13 @@ function get_variables() {
 	let res = [];
 	for (let variable in labels[current_beam_type]) {
 		let text = $("#" + variable).val();
+		if (text === "" ) {
+			throw new Error("One or more inputs is missing");
+		}
 		try {
 			res.push(fc(text));
 		} catch(e) {
-			alert("Error: Invalid " + labels[current_beam_type][variable]);
-			return null;
+			throw new Error("Invalid " + labels[current_beam_type][variable]);
 		}
 	}
 	return res;
@@ -348,6 +381,12 @@ function calculate() {
 		case "HBeam":
 			current_beam = new HBeam(...res);
 			break;
+		case "NBeam":
+			current_beam = new NBeam(...res);
+			break;
+		case "UBeam":
+			current_beam = new UBeam(...res);
+			break;
 		case "CircleBeam":
 			current_beam = new CircleBeam(...res);
 			break;
@@ -359,6 +398,11 @@ function calculate() {
 			break;
 		default:
 			return;
+	}
+
+	// Error checking
+	if (current_beam.get_area().equals(0)) {
+		throw new Error("Area is 0");
 	}
 
 	// Calculate values
@@ -458,6 +502,12 @@ let tests = {
 		{"args": [12,1,0,0,0,0], "results": [12,6,0.5,1]},
 		{"args": [0,0,0,0,12,1], "results": [12,6,0.5,1]},
 		{"args": [4,10,10,4,4,10], "results": [120,9,5,720]},
+	],
+	"NBeam": [
+		{"args": [2,20,20,2,2,20], "results": [120,12,13,4840]},
+	],
+	"UBeam": [
+		{"args": [2,20,20,2,2,20], "results": [120,12,7,4840]},
 	],
 	"CircleBeam": [
 		{"args": [2], "results": [4,2,2,4]},
